@@ -1,18 +1,18 @@
-FROM ubuntu:14.04
-MAINTAINER Afterster
+FROM ubuntu:16.04
+MAINTAINER Mike de Heij
 
 RUN echo 'deb http://download.videolan.org/pub/debian/stable/ /' >> /etc/apt/sources.list
 RUN echo 'deb-src http://download.videolan.org/pub/debian/stable/ /' >> /etc/apt/sources.list
-RUN echo 'deb http://archive.ubuntu.com/ubuntu trusty main multiverse' >> /etc/apt/sources.list
+RUN echo 'deb http://archive.ubuntu.com/ubuntu xenial main multiverse' >> /etc/apt/sources.list
 
 RUN apt-get update
 RUN apt-get -y upgrade
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget inotify-tools
-RUN wget -O - https://download.videolan.org/pub/debian/videolan-apt.asc|sudo apt-key add -
+RUN wget -O - https://download.videolan.org/pub/debian/videolan-apt.asc | apt-key add -
 RUN apt-get update
 
 # Need this environment variable otherwise mysql will prompt for passwords
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install mysql-server apache2 wget php5 php5-json php5-curl php5-mysqlnd pwgen lame libvorbis-dev vorbis-tools flac libmp3lame-dev libavcodec-extra* libfaac-dev libtheora-dev libvpx-dev libav-tools git
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install apache2 wget php7.0 php7.0-json php7.0-curl php7.0-mysql pwgen lame libvorbis-dev vorbis-tools opus-tools flac libmp3lame-dev libavcodec-extra* libfaac-dev libtheora-dev libvpx-dev libav-tools git sudo libapache2-mod-php7.0 php7.0-xml
 
 # Install composer for dependency management
 RUN php -r "readfile('https://getcomposer.org/installer');" | php && \
@@ -28,16 +28,8 @@ RUN rm -rf /var/www/* && \
     cd /var/www && composer install --prefer-source --no-interaction && \
     chown -R www-data /var/www
 
-# setup mysql like this project does it: https://github.com/tutumcloud/tutum-docker-mysql
-# Remove pre-installed database
-
-RUN rm -rf /var/lib/mysql/*
-ADD create_mysql_admin_user.sh /create_mysql_admin_user.sh
 ADD run.sh /run.sh
 RUN chmod 755 /*.sh
-ENV MYSQL_PASS **Random**
-# Add VOLUMEs to allow backup of config and databases
-VOLUME  ["/etc/mysql", "/var/lib/mysql"]
 
 # setup apache with default ampache vhost
 ADD 001-ampache.conf /etc/apache2/sites-available/
